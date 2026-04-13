@@ -9,6 +9,11 @@ const io = new Server(server);
 // 🔥 SERVIR ARQUIVOS
 app.use(express.static("public"));
 
+// ✅ ROTA PRINCIPAL (CORREÇÃO DO ERRO)
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/index.html");
+});
+
 // 🔥 ESTADO DO TIMER
 let timerState = {
   duration: 300,
@@ -47,7 +52,6 @@ setInterval(() => {
   if (timerState.mode === "countdown") {
     timerState.remaining -= diffSeconds;
 
-    // 🔥 VIROU ZERO → COMEÇA O VERMELHO
     if (timerState.remaining <= 0) {
       timerState.overtime = Math.abs(timerState.remaining);
       timerState.remaining = 0;
@@ -66,7 +70,6 @@ setInterval(() => {
 io.on("connection", (socket) => {
   emitState();
 
-  // ▶ INICIAR
   socket.on("timer:start", () => {
     if (!timerState.running) {
       timerState.running = true;
@@ -75,7 +78,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // ⏸ PAUSAR
   socket.on("timer:pause", () => {
     if (timerState.running) {
       timerState.running = false;
@@ -84,7 +86,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // ⏹ RESETAR
   socket.on("timer:reset", () => {
     timerState.running = false;
     timerState.mode = "countdown";
@@ -94,7 +95,6 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  // ⏱ DEFINIR TEMPO
   socket.on("timer:set", (seconds) => {
     const value = Math.max(0, Number(seconds) || 0);
 
@@ -108,7 +108,6 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  // ➕➖ AJUSTAR TEMPO
   socket.on("timer:add", (seconds) => {
     const value = Number(seconds) || 0;
 
@@ -121,7 +120,6 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  // 🖥 TROCAR EXIBIÇÃO
   socket.on("display:timer", () => {
     timerState.displayMode = "timer";
     emitState();
