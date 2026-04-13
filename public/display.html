@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronômetro</title>
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+@font-face {
+  font-family: 'DS-Digital';
+  src: url('DS-DIGI.TTF') format('truetype');
+  font-display: swap;
+}
+
+:root{
+  --green:#57ff00;
+  --red:#ff1a1a;
+  --white:#f2f2f2;
+  --yellow:#e6dd1a;
+}
+
+body{
+  margin:0;
+  background:#000;
+  overflow:hidden;
+  font-family:Arial;
+}
+
+/* TELA NORMAL */
+.screen{
+  width:100vw;
+  height:100vh;
+  padding:0.5vh 1vw;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.label{
+  color:var(--yellow);
+  font-size:1.4vw;
+  letter-spacing:0.08em;
+}
+
+/* CRONOMETRO */
+.time{
+  font-family:'DS-Digital', monospace;
+  font-size:48vh;
+  line-height:0.72;
+  letter-spacing:0.015em;
+  font-variant-ligatures:none;
+  text-rendering:optimizeSpeed;
+}
+
+.green{color:var(--green);}
+
+.red{
+  color:var(--red);
+  margin-top:-2.5vh;
+}
+
+/* HORA NORMAL */
+.clock{
+  font-family:'DS-Digital', monospace;
+  font-size:30vh;
+  line-height:0.75;
+  letter-spacing:0.02em;
+  color:var(--white);
+  font-variant-ligatures:none;
+  text-rendering:optimizeSpeed;
+}
+
+/* 🔥 MODO SÓ HORA */
+.clock-only-wrap{
+  display:none;
+  width:100vw;
+  height:100vh;
+  padding:0.5vh 1.2vw;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+}
+
+.clock-only-label{
+  color:var(--yellow);
+  font-size:1.4vw;
+  letter-spacing:0.08em;
+  margin-bottom:0.3vh;
+}
+
+.clock-only{
+  font-family:'DS-Digital', monospace;
+
+  font-size:50vh; /* 🔥 AJUSTE QUE VOCÊ PEDIU */
+
+  line-height:0.7;
+  letter-spacing:0.01em;
+
+  color:var(--white);
+
+  font-variant-ligatures:none;
+  text-rendering:optimizeSpeed;
+}
+
+.hidden{
+  display:none !important;
+}
+</style>
+</head>
+
+<body>
+
+<div id="screen" class="screen">
+  <div>
+    <div class="label">CRONOMETRO</div>
+
+    <div id="countdown" class="time green">00:00:00</div>
+    <div id="elapsed" class="time red">00:00:00</div>
+
+    <div class="label">HORA</div>
+    <div id="clock" class="clock">00:00:00</div>
+  </div>
+</div>
+
+<div id="clockOnlyWrap" class="clock-only-wrap">
+  <div class="clock-only-label">HORA</div>
+  <div id="clockOnly" class="clock-only">00:00:00</div>
+</div>
+
+<script>
+const socket = io();
+
+const screenEl = document.getElementById("screen");
+const clockOnlyWrapEl = document.getElementById("clockOnlyWrap");
+const countdownEl = document.getElementById("countdown");
+const elapsedEl = document.getElementById("elapsed");
+const clockEl = document.getElementById("clock");
+const clockOnlyEl = document.getElementById("clockOnly");
+
+let currentDisplayMode = "timer";
+
+function pad(n){return String(n).padStart(2,"0");}
+
+function format(sec){
+  sec = Math.max(0, Number(sec)||0);
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = sec%60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function applyDisplayMode() {
+  if (currentDisplayMode === "clock") {
+    screenEl.classList.add("hidden");
+    clockOnlyWrapEl.style.display = "flex";
+  } else {
+    screenEl.classList.remove("hidden");
+    clockOnlyWrapEl.style.display = "none";
+  }
+}
+
+socket.on("timer:update",(state)=>{
+  countdownEl.innerHTML = format(state.remaining);
+  elapsedEl.innerHTML = format(state.overtime || 0);
+
+  currentDisplayMode = state.displayMode || "timer";
+  applyDisplayMode();
+});
+
+function updateClock(){
+  const now = new Date();
+  const timeText = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+  clockEl.innerHTML = timeText;
+  clockOnlyEl.innerHTML = timeText;
+}
+
+setInterval(updateClock,1000);
+updateClock();
+applyDisplayMode();
+</script>
+
+</body>
+</html>

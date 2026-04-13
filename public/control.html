@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle</title>
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+@font-face {
+  font-family: 'DS-Digital';
+  src: url('DS-DIGI.TTF') format('truetype');
+  font-display: swap;
+}
+
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#111;
+  color:#fff;
+  padding:16px;
+}
+
+h1{
+  margin-bottom:10px;
+}
+
+#preview{
+  margin-bottom:20px;
+  background:#000;
+  padding:12px;
+  border-radius:10px;
+  min-height:180px;
+}
+
+.preview-label{
+  color:#e6dd1a;
+  font-size:12px;
+  letter-spacing:0.08em;
+  margin-bottom:4px;
+}
+
+.preview-time{
+  font-family:'DS-Digital', monospace;
+  font-size:54px;
+  line-height:0.8;
+  letter-spacing:0.02em;
+  font-variant-ligatures:none;
+  text-rendering:optimizeSpeed;
+}
+
+.preview-green{
+  color:#57ff00;
+}
+
+.preview-red{
+  color:#ff1a1a;
+  margin-top:-6px;
+}
+
+.preview-clock{
+  font-family:'DS-Digital', monospace;
+  font-size:34px;
+  line-height:0.8;
+  letter-spacing:0.02em;
+  color:#f2f2f2;
+  font-variant-ligatures:none;
+  text-rendering:optimizeSpeed;
+}
+
+.preview-clock-only-wrap{
+  display:none;
+}
+
+.preview-clock-only-label{
+  color:#e6dd1a;
+  font-size:12px;
+  letter-spacing:0.08em;
+  margin-bottom:6px;
+}
+
+.preview-clock-only{
+  font-family:'DS-Digital', monospace;
+  font-size:72px;
+  line-height:0.8;
+  letter-spacing:0.02em;
+  color:#f2f2f2;
+  font-variant-ligatures:none;
+  text-rendering:optimizeSpeed;
+}
+
+.card{
+  background:#1c1c1c;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:12px;
+}
+
+.title{
+  font-size:14px;
+  margin-bottom:8px;
+  color:#ccc;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.grid-inputs{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+
+.input-small{
+  width:80px;
+  text-align:center;
+}
+
+.grid-3{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+}
+
+button{
+  padding:14px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  color:#fff;
+}
+
+.green{background:#2ecc71;}
+.orange{background:#f39c12;}
+.red{background:#e74c3c;}
+.blue{background:#3498db;}
+.purple{background:#9b59b6;}
+
+.black{
+  background:#000;
+  border:1px solid #333;
+}
+
+input{
+  padding:12px;
+  font-size:20px;
+  border:none;
+  border-radius:10px;
+  background:#333;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Controle</h1>
+
+<div id="preview">
+  <div id="previewTimerWrap">
+    <div class="preview-label">CRONOMETRO</div>
+    <div id="previewRemaining" class="preview-time preview-green">00:05:00</div>
+    <div id="previewOvertime" class="preview-time preview-red">00:00:00</div>
+
+    <div class="preview-label" style="margin-top:8px;">HORA</div>
+    <div id="previewClock" class="preview-clock">00:00:00</div>
+  </div>
+
+  <div id="previewClockOnlyWrap" class="preview-clock-only-wrap">
+    <div class="preview-clock-only-label">HORA</div>
+    <div id="previewClockOnly" class="preview-clock-only">00:00:00</div>
+  </div>
+</div>
+
+<!-- EXIBIÇÃO -->
+<div class="card">
+  <div class="title">Exibição</div>
+
+  <div class="grid">
+    <button class="blue" onclick="socket.emit('display:timer')">Cronômetro</button>
+    <button class="purple" onclick="socket.emit('display:clock')">Só Hora</button>
+  </div>
+</div>
+
+<!-- TEMPO -->
+<div class="card">
+  <div class="title">Definir tempo</div>
+
+  <div class="grid-inputs">
+    <input class="input-small" type="number" id="minutes" value="5">
+    <input class="input-small" type="number" id="seconds" value="0">
+  </div>
+
+  <div style="height:10px"></div>
+
+  <button class="blue" onclick="setTimer()">Definir Tempo</button>
+</div>
+
+<!-- PRESETS -->
+<div class="card">
+  <div class="title">Predefinições</div>
+
+  <div class="grid-3">
+    <button class="black" onclick="setPreset(5)">5 min</button>
+    <button class="black" onclick="setPreset(10)">10 min</button>
+    <button class="black" onclick="setPreset(15)">15 min</button>
+    <button class="black" onclick="setPreset(20)">20 min</button>
+    <button class="black" onclick="setPreset(25)">25 min</button>
+    <button class="black" onclick="setPreset(30)">30 min</button>
+  </div>
+</div>
+
+<!-- CONTROLES -->
+<div class="card">
+  <div class="title">Controles</div>
+
+  <div class="grid">
+    <button class="green" onclick="socket.emit('timer:start')">▶ Iniciar</button>
+    <button class="orange" onclick="socket.emit('timer:pause')">⏸ Pausar</button>
+    <button class="red" onclick="socket.emit('timer:reset')">⏹ Resetar</button>
+  </div>
+</div>
+
+<!-- AJUSTES -->
+<div class="card">
+  <div class="title">Ajustes rápidos</div>
+
+  <div class="grid-3">
+    <button class="black" onclick="socket.emit('timer:add', 60)">+1 min</button>
+    <button class="black" onclick="socket.emit('timer:add', -60)">-1 min</button>
+    <button class="black" onclick="socket.emit('timer:add', 30)">+30s</button>
+    <button class="black" onclick="socket.emit('timer:add', -30)">-30s</button>
+    <button class="black" onclick="socket.emit('timer:add', 10)">+10s</button>
+    <button class="black" onclick="socket.emit('timer:add', -10)">-10s</button>
+  </div>
+</div>
+
+<script>
+const socket = io();
+
+const previewTimerWrap = document.getElementById("previewTimerWrap");
+const previewClockOnlyWrap = document.getElementById("previewClockOnlyWrap");
+
+const previewRemaining = document.getElementById("previewRemaining");
+const previewOvertime = document.getElementById("previewOvertime");
+const previewClock = document.getElementById("previewClock");
+const previewClockOnly = document.getElementById("previewClockOnly");
+
+let currentDisplayMode = "timer";
+
+function pad(n){
+  return String(n).padStart(2,"0");
+}
+
+function format(sec){
+  sec = Math.max(0, Number(sec) || 0);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function setTimer(){
+  const m = Number(document.getElementById("minutes").value) || 0;
+  const s = Number(document.getElementById("seconds").value) || 0;
+  socket.emit("timer:set", (m * 60) + s);
+}
+
+function setPreset(min){
+  socket.emit("timer:set", min * 60);
+}
+
+function updateClockPreview(){
+  const now = new Date();
+  const timeText = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  previewClock.textContent = timeText;
+  previewClockOnly.textContent = timeText;
+}
+
+function applyPreviewMode(){
+  if (currentDisplayMode === "clock") {
+    previewTimerWrap.style.display = "none";
+    previewClockOnlyWrap.style.display = "block";
+  } else {
+    previewTimerWrap.style.display = "block";
+    previewClockOnlyWrap.style.display = "none";
+  }
+}
+
+socket.on("timer:update",(state)=>{
+  previewRemaining.textContent = format(state.remaining);
+  previewOvertime.textContent = format(state.overtime || 0);
+  currentDisplayMode = state.displayMode || "timer";
+  applyPreviewMode();
+});
+
+setInterval(updateClockPreview, 1000);
+updateClockPreview();
+applyPreviewMode();
+</script>
+
+</body>
+</html>
