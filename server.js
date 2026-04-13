@@ -1,31 +1,28 @@
 const express = require("express");
 const http = require("http");
+const path = require("path");
 const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// 🔥 SERVIR ARQUIVOS
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ ROTA PRINCIPAL (CORREÇÃO DO ERRO)
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// 🔥 ESTADO DO TIMER
 let timerState = {
   duration: 300,
   remaining: 300,
   overtime: 0,
   running: false,
-  mode: "countdown", // countdown | overtime
-  displayMode: "timer", // timer | clock
+  mode: "countdown",
+  displayMode: "timer",
   lastTick: null
 };
 
-// 🔄 EMITIR ESTADO
 function emitState() {
   io.emit("timer:update", {
     duration: timerState.duration,
@@ -37,7 +34,6 @@ function emitState() {
   });
 }
 
-// ⏱ LOOP DO TIMER
 setInterval(() => {
   if (!timerState.running || timerState.lastTick === null) return;
 
@@ -48,7 +44,6 @@ setInterval(() => {
 
   timerState.lastTick += diffSeconds * 1000;
 
-  // 🔽 CONTAGEM REGRESSIVA
   if (timerState.mode === "countdown") {
     timerState.remaining -= diffSeconds;
 
@@ -57,16 +52,13 @@ setInterval(() => {
       timerState.remaining = 0;
       timerState.mode = "overtime";
     }
-  }
-  // 🔺 CONTAGEM PROGRESSIVA
-  else {
+  } else {
     timerState.overtime += diffSeconds;
   }
 
   emitState();
 }, 200);
 
-// 🔌 CONEXÃO SOCKET
 io.on("connection", (socket) => {
   emitState();
 
@@ -131,7 +123,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// 🔥 PORTA AUTOMÁTICA (RENDER)
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, "0.0.0.0", () => {
