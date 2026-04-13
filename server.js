@@ -10,7 +10,15 @@ const io = new Server(server);
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "display.html"));
+});
+
+app.get("/controle", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "control.html"));
+});
+
+app.get("/display", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "display.html"));
 });
 
 let timerState = {
