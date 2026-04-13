@@ -25,6 +25,7 @@ body{
   background:#000;
   overflow:hidden;
   font-family:Arial;
+  cursor:pointer;
 }
 
 /* BOTAO FULLSCREEN */
@@ -35,8 +36,8 @@ body{
   z-index:9999;
   padding:10px 14px;
   font-size:14px;
-  border:none;
-  border-radius:8px;
+  border:1px solid #fff;
+  border-radius:12px;
   background:rgba(20,20,20,0.85);
   color:#fff;
   cursor:pointer;
@@ -68,7 +69,9 @@ body{
   text-rendering:optimizeSpeed;
 }
 
-.green{color:var(--green);}
+.green{
+  color:var(--green);
+}
 
 .red{
   color:var(--red);
@@ -122,7 +125,7 @@ body{
 
 <body>
 
-<button id="fullscreenBtn" onclick="toggleFullscreen()">Tela cheia</button>
+<button id="fullscreenBtn" onclick="toggleFullscreen(event)">Tela cheia</button>
 
 <div id="screen" class="screen">
   <div>
@@ -154,13 +157,15 @@ const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 let currentDisplayMode = "timer";
 
-function pad(n){return String(n).padStart(2,"0");}
+function pad(n){
+  return String(n).padStart(2, "0");
+}
 
 function format(sec){
-  sec = Math.max(0, Number(sec)||0);
-  const h = Math.floor(sec/3600);
-  const m = Math.floor((sec%3600)/60);
-  const s = sec%60;
+  sec = Math.max(0, Number(sec) || 0);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
@@ -174,7 +179,7 @@ function applyDisplayMode() {
   }
 }
 
-socket.on("timer:update",(state)=>{
+socket.on("timer:update", (state) => {
   countdownEl.innerHTML = format(state.remaining);
   elapsedEl.innerHTML = format(state.overtime || 0);
 
@@ -190,7 +195,15 @@ function updateClock(){
   clockOnlyEl.innerHTML = timeText;
 }
 
-function toggleFullscreen() {
+function enterFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+}
+
+function toggleFullscreen(event) {
+  event.stopPropagation();
+
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(() => {});
   } else {
@@ -199,10 +212,19 @@ function toggleFullscreen() {
 }
 
 document.addEventListener("fullscreenchange", () => {
-  fullscreenBtn.textContent = document.fullscreenElement ? "Sair da tela cheia" : "Tela cheia";
+  if (document.fullscreenElement) {
+    fullscreenBtn.style.display = "none";
+  } else {
+    fullscreenBtn.style.display = "block";
+  }
 });
 
-setInterval(updateClock,1000);
+/* CLIQUE EM QUALQUER LUGAR DA TELA PARA ENTRAR EM FULLSCREEN */
+document.body.addEventListener("click", () => {
+  enterFullscreen();
+});
+
+setInterval(updateClock, 1000);
 updateClock();
 applyDisplayMode();
 </script>
