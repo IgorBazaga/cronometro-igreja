@@ -27,6 +27,21 @@ body{
   font-family:Arial;
 }
 
+/* BOTAO FULLSCREEN */
+#fullscreenBtn{
+  position:fixed;
+  top:10px;
+  right:10px;
+  z-index:9999;
+  padding:10px 14px;
+  font-size:14px;
+  border:none;
+  border-radius:8px;
+  background:rgba(20,20,20,0.85);
+  color:#fff;
+  cursor:pointer;
+}
+
 /* TELA NORMAL */
 .screen{
   width:100vw;
@@ -71,7 +86,7 @@ body{
   text-rendering:optimizeSpeed;
 }
 
-/* MODO SÓ HORA */
+/* MODO SO HORA */
 .clock-only-wrap{
   display:none;
   width:100vw;
@@ -107,6 +122,8 @@ body{
 
 <body>
 
+<button id="fullscreenBtn" onclick="toggleFullscreen()">Tela cheia</button>
+
 <div id="screen" class="screen">
   <div>
     <div class="label">CRONOMETRO</div>
@@ -133,6 +150,7 @@ const countdownEl = document.getElementById("countdown");
 const elapsedEl = document.getElementById("elapsed");
 const clockEl = document.getElementById("clock");
 const clockOnlyEl = document.getElementById("clockOnly");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 let currentDisplayMode = "timer";
 
@@ -171,6 +189,18 @@ function updateClock(){
   clockEl.innerHTML = timeText;
   clockOnlyEl.innerHTML = timeText;
 }
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+document.addEventListener("fullscreenchange", () => {
+  fullscreenBtn.textContent = document.fullscreenElement ? "Sair da tela cheia" : "Tela cheia";
+});
 
 setInterval(updateClock,1000);
 updateClock();
